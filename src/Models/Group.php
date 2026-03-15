@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace EventIO\ApiClient\Models;
 
-final readonly class Group
+final readonly class Group implements \JsonSerializable
 {
     /**
      * @param list<Booking>|null $bookings
@@ -33,5 +33,21 @@ final readonly class Group
             bookings: isset($data['bookings']) ? array_values(array_map(Booking::fromArray(...), $data['bookings'])) : null,
             event: isset($data['event']) ? Event::fromArray($data['event']) : null,
         );
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function jsonSerialize(): array
+    {
+        return [
+            'id' => $this->id,
+            'event_id' => $this->eventId,
+            'name' => $this->name,
+            'association' => $this->association,
+            'customer' => $this->customer,
+            'bookings' => $this->bookings,
+            'event' => $this->event,
+        ];
     }
 }

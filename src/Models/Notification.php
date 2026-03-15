@@ -9,7 +9,7 @@ use EventIO\ApiClient\Enums\NotificationStatus;
 use EventIO\ApiClient\Enums\NotificationType;
 use EventIO\ApiClient\Requests\NotificationFilters;
 
-final readonly class Notification
+final readonly class Notification implements \JsonSerializable
 {
     public function __construct(
         public int $id,
@@ -47,5 +47,27 @@ final readonly class Notification
             createdAt: new DateTimeImmutable($data['created_at']),
             selfLink: $data['links']['self'] ?? null,
         );
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function jsonSerialize(): array
+    {
+        return [
+            'id' => $this->id,
+            'event_id' => $this->eventId,
+            'title' => $this->title,
+            'content' => $this->content,
+            'type' => $this->type->value,
+            'status' => $this->status->value,
+            'filters' => $this->filters?->toArray(),
+            'scheduled_at' => $this->scheduledAt?->format(\DateTimeInterface::ATOM),
+            'sent_at' => $this->sentAt?->format(\DateTimeInterface::ATOM),
+            'users' => $this->users,
+            'devices' => $this->devices,
+            'created_at' => $this->createdAt->format(\DateTimeInterface::ATOM),
+            'links' => ['self' => $this->selfLink],
+        ];
     }
 }

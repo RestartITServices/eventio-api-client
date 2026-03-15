@@ -6,7 +6,7 @@ namespace EventIO\ApiClient\Models;
 
 use DateTimeImmutable;
 
-final readonly class EventStats
+final readonly class EventStats implements \JsonSerializable
 {
     /**
      * @param list<EventStatItem> $stats
@@ -33,5 +33,20 @@ final readonly class EventStats
             totalProvisional: $data['total_provisional'],
             generatedAt: new DateTimeImmutable($data['generated_at']),
         );
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function jsonSerialize(): array
+    {
+        return [
+            'event_id' => $this->eventId,
+            'event_name' => $this->eventName,
+            'stats' => $this->stats,
+            'total_confirmed' => $this->totalConfirmed,
+            'total_provisional' => $this->totalProvisional,
+            'generated_at' => $this->generatedAt->format(\DateTimeInterface::ATOM),
+        ];
     }
 }

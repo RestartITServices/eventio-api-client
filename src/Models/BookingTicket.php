@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace EventIO\ApiClient\Models;
 
-final readonly class BookingTicket
+final readonly class BookingTicket implements \JsonSerializable
 {
     public function __construct(
         public int $id,
@@ -34,5 +34,23 @@ final readonly class BookingTicket
             booking: isset($data['booking']) ? Booking::fromArray($data['booking']) : null,
             ticket: isset($data['ticket']) ? Ticket::fromArray($data['ticket']) : null,
         );
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function jsonSerialize(): array
+    {
+        return [
+            'id' => $this->id,
+            'booking_id' => $this->bookingId,
+            'ticket_id' => $this->ticketId,
+            'ticket_title' => $this->ticketTitle,
+            'participant_type' => $this->participantType,
+            'qty' => $this->qty,
+            'price' => $this->price,
+            'booking' => $this->booking,
+            'ticket' => $this->ticket,
+        ];
     }
 }

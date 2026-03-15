@@ -7,7 +7,7 @@ namespace EventIO\ApiClient\Models;
 use DateTimeImmutable;
 use EventIO\ApiClient\Enums\BookingStatus;
 
-final readonly class Booking
+final readonly class Booking implements \JsonSerializable
 {
     /**
      * @param list<BookingTicket>|null $tickets
@@ -38,5 +38,22 @@ final readonly class Booking
             tickets: isset($data['tickets']) ? array_values(array_map(BookingTicket::fromArray(...), $data['tickets'])) : null,
             group: isset($data['group']) ? Group::fromArray($data['group']) : null,
         );
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function jsonSerialize(): array
+    {
+        return [
+            'id' => $this->id,
+            'event_id' => $this->eventId,
+            'booking_type' => $this->bookingType,
+            'booking_reference' => $this->bookingReference,
+            'status' => $this->status->value,
+            'created_at' => $this->createdAt->format(\DateTimeInterface::ATOM),
+            'tickets' => $this->tickets,
+            'group' => $this->group,
+        ];
     }
 }

@@ -440,7 +440,7 @@ test('client lists participants with filters', function () {
             'data' => [
                 [
                     'id' => 1,
-                    'wristband_id' => 'W-1001',
+                    'wristband_id' => 1001,
                     'participant_type' => 'participant',
                     'full_name' => 'John Doe',
                     'email' => 'john@example.com',
@@ -475,7 +475,7 @@ test('client gets participant by key', function () {
         MockHttpFactory::json([
             'data' => [
                 'id' => 1,
-                'wristband_id' => 'W-1001',
+                'wristband_id' => 1001,
                 'participant_type' => 'participant',
                 'full_name' => 'John Doe',
                 'email' => 'john@example.com',
@@ -504,7 +504,7 @@ test('client gets participant by wristband id', function () {
         MockHttpFactory::json([
             'data' => [
                 'id' => 1,
-                'wristband_id' => 'W-1001',
+                'wristband_id' => 1001,
                 'participant_type' => 'participant',
                 'full_name' => 'John Doe',
                 'email' => 'john@example.com',
@@ -521,7 +521,7 @@ test('client gets participant by wristband id', function () {
     $participant = $client->event(1)->participants()->getByWristband('W-1001');
 
     expect($participant)->toBeInstanceOf(Participant::class);
-    expect($participant->wristbandId)->toBe('W-1001');
+    expect($participant->wristbandId)->toBe(1001);
 
     $uri = (string) $history[0]['request']->getUri();
     expect($uri)->toContain('event/1/participants/wristband/W-1001');

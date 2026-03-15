@@ -6,7 +6,7 @@ namespace EventIO\ApiClient\Models;
 
 use DateTimeImmutable;
 
-final readonly class Event
+final readonly class Event implements \JsonSerializable
 {
     /**
      * @param list<Ticket>|null $tickets
@@ -36,5 +36,21 @@ final readonly class Event
             tickets: isset($data['tickets']) ? array_values(array_map(Ticket::fromArray(...), $data['tickets'])) : null,
             bookings: isset($data['bookings']) ? array_values(array_map(Booking::fromArray(...), $data['bookings'])) : null,
         );
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function jsonSerialize(): array
+    {
+        return [
+            'id' => $this->id,
+            'slug' => $this->slug,
+            'name' => $this->name,
+            'start_date' => $this->startDate->format('Y-m-d'),
+            'end_date' => $this->endDate->format('Y-m-d'),
+            'tickets' => $this->tickets,
+            'bookings' => $this->bookings,
+        ];
     }
 }

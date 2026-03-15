@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace EventIO\ApiClient\Models;
 
-final readonly class EventUser
+final readonly class EventUser implements \JsonSerializable
 {
     public function __construct(
         public int $id,
@@ -30,5 +30,21 @@ final readonly class EventUser
             event: isset($data['event']) ? Event::fromArray($data['event']) : null,
             role: isset($data['role']) ? EventRole::fromArray($data['role']) : null,
         );
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function jsonSerialize(): array
+    {
+        return [
+            'id' => $this->id,
+            'user_id' => $this->userId,
+            'event_id' => $this->eventId,
+            'active' => $this->active,
+            'user' => $this->user,
+            'role' => $this->role,
+            'event' => $this->event,
+        ];
     }
 }

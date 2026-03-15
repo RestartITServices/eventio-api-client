@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace EventIO\ApiClient\Models;
 
-final readonly class EventStatItem
+final readonly class EventStatItem implements \JsonSerializable
 {
     public function __construct(
         public int $id,
@@ -26,5 +26,19 @@ final readonly class EventStatItem
             totalConfirmedTicketsSold: $data['total_confirmed_tickets_sold'],
             totalProvisionalTicketsSold: $data['total_provisional_tickets_sold'],
         );
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function jsonSerialize(): array
+    {
+        return [
+            'id' => $this->id,
+            'participant_type' => $this->participantType,
+            'title' => $this->title,
+            'total_confirmed_tickets_sold' => $this->totalConfirmedTicketsSold,
+            'total_provisional_tickets_sold' => $this->totalProvisionalTicketsSold,
+        ];
     }
 }

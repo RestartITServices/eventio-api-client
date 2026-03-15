@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace EventIO\ApiClient\Models;
 
-final readonly class Customer
+final readonly class Customer implements \JsonSerializable
 {
     /**
      * @param list<Group>|null $groups
@@ -29,5 +29,19 @@ final readonly class Customer
             postCode: $data['post_code'] ?? null,
             groups: isset($data['groups']) ? array_values(array_map(Group::fromArray(...), $data['groups'])) : null,
         );
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function jsonSerialize(): array
+    {
+        return [
+            'id' => $this->id,
+            'full_name' => $this->fullName,
+            'email_address' => $this->emailAddress,
+            'post_code' => $this->postCode,
+            'groups' => $this->groups,
+        ];
     }
 }
