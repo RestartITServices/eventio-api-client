@@ -13,6 +13,7 @@ use EventIO\ApiClient\Models\EventStats;
 use EventIO\ApiClient\Models\EventUser;
 use EventIO\ApiClient\Models\Group;
 use EventIO\ApiClient\Models\Notification;
+use EventIO\ApiClient\Models\Participant;
 use EventIO\ApiClient\Models\Ticket;
 use EventIO\ApiClient\Models\User;
 use EventIO\ApiClient\Enums\BookingStatus;
@@ -317,4 +318,55 @@ test('Notification::fromArray with typed filters', function () {
     expect($notif->filters->participantType)->toHaveCount(3);
     expect($notif->filters->participantType[0])->toBe(ParticipantType::Participant);
     expect($notif->filters->participantType[1])->toBe(ParticipantType::Leader);
+});
+
+test('Participant::fromArray creates participant model', function () {
+    $participant = Participant::fromArray([
+        'id' => 1,
+        'wristband_id' => 'W-1001',
+        'participant_type' => 'participant',
+        'full_name' => 'John Doe',
+        'email' => 'john@example.com',
+        'phone_number' => '07700900000',
+        'association' => 'Group A',
+        'off_site' => false,
+        'checked_in_at' => '2026-03-15T09:00:00.000000Z',
+        'group' => null,
+    ]);
+
+    expect($participant->id)->toBe(1);
+    expect($participant->wristbandId)->toBe('W-1001');
+    expect($participant->participantType)->toBe(ParticipantType::Participant);
+    expect($participant->fullName)->toBe('John Doe');
+    expect($participant->email)->toBe('john@example.com');
+    expect($participant->phoneNumber)->toBe('07700900000');
+    expect($participant->association)->toBe('Group A');
+    expect($participant->offSite)->toBeFalse();
+    expect($participant->checkedInAt->format('Y-m-d'))->toBe('2026-03-15');
+    expect($participant->group)->toBeNull();
+});
+
+test('Participant::fromArray with included group', function () {
+    $participant = Participant::fromArray([
+        'id' => 1,
+        'wristband_id' => 'W-1001',
+        'participant_type' => 'leader',
+        'full_name' => 'Jane Smith',
+        'email' => 'jane@example.com',
+        'phone_number' => null,
+        'association' => null,
+        'off_site' => true,
+        'checked_in_at' => null,
+        'group' => [
+            'id' => 1,
+            'event_id' => 1,
+            'name' => 'ACME Corp',
+        ],
+    ]);
+
+    expect($participant->participantType)->toBe(ParticipantType::Leader);
+    expect($participant->offSite)->toBeTrue();
+    expect($participant->checkedInAt)->toBeNull();
+    expect($participant->group)->not->toBeNull();
+    expect($participant->group->name)->toBe('ACME Corp');
 });

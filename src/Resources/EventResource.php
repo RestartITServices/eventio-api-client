@@ -95,6 +95,11 @@ final readonly class EventResource
         return new NotificationResource($this->http, $this->resolveEventId($eventId));
     }
 
+    public function participants(?int $eventId = null): ParticipantResource
+    {
+        return new ParticipantResource($this->http, $this->resolveEventId($eventId));
+    }
+
     private function resolveEventId(?int $eventId): int
     {
         return $eventId ?? $this->eventId ?? throw new \InvalidArgumentException('An eventId is required.');

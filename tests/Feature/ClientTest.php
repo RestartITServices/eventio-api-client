@@ -14,6 +14,7 @@ use EventIO\ApiClient\Models\EventRole;
 use EventIO\ApiClient\Models\EventUser;
 use EventIO\ApiClient\Models\Group;
 use EventIO\ApiClient\Models\Notification;
+use EventIO\ApiClient\Models\Participant;
 use EventIO\ApiClient\Models\Ticket;
 use EventIO\ApiClient\Requests\CreateNotificationRequest;
 use EventIO\ApiClient\Requests\NotificationFilters;
@@ -430,4 +431,98 @@ test('booking tickets endpoint', function () {
     expect($tickets)->toHaveCount(1);
     $uri = (string) $history[0]['request']->getUri();
     expect($uri)->toContain('event/1/bookings/1/tickets');
+});
+
+test('client lists participants with filters', function () {
+    $history = [];
+    $guzzle = MockHttpFactory::make([
+        MockHttpFactory::json([
+            'data' => [
+                [
+                    'id' => 1,
+                    'wristband_id' => 'W-1001',
+                    'participant_type' => 'participant',
+                    'full_name' => 'John Doe',
+                    'email' => 'john@example.com',
+                    'phone_number' => '07700900000',
+                    'association' => 'Group A',
+                    'off_site' => false,
+                    'checked_in_at' => '2026-03-15T09:00:00.000000Z',
+                    'group' => null,
+                ],
+            ],
+        ]),
+    ], $history);
+
+    $client = new Client('token', 'https://api.eventio.uk/api/v2', $guzzle);
+    $participants = $client->event(1)->participants()->list()
+        ->filter('participant_type', 'participant')
+        ->sort('last_name')
+        ->get()
+        ->toArray();
+
+    expect($participants)->toHaveCount(1);
+    expect($participants[0])->toBeInstanceOf(Participant::class);
+    expect($participants[0]->fullName)->toBe('John Doe');
+
+    $uri = (string) $history[0]['request']->getUri();
+    expect($uri)->toContain('event/1/participants');
+});
+
+test('client gets participant by key', function () {
+    $history = [];
+    $guzzle = MockHttpFactory::make([
+        MockHttpFactory::json([
+            'data' => [
+                'id' => 1,
+                'wristband_id' => 'W-1001',
+                'participant_type' => 'participant',
+                'full_name' => 'John Doe',
+                'email' => 'john@example.com',
+                'phone_number' => '07700900000',
+                'association' => 'Group A',
+                'off_site' => false,
+                'checked_in_at' => '2026-03-15T09:00:00.000000Z',
+                'group' => null,
+            ],
+        ]),
+    ], $history);
+
+    $client = new Client('token', 'https://api.eventio.uk/api/v2', $guzzle);
+    $participant = $client->event(1)->participants()->get('abc-123');
+
+    expect($participant)->toBeInstanceOf(Participant::class);
+    expect($participant->fullName)->toBe('John Doe');
+
+    $uri = (string) $history[0]['request']->getUri();
+    expect($uri)->toContain('event/1/participants/abc-123');
+});
+
+test('client gets participant by wristband id', function () {
+    $history = [];
+    $guzzle = MockHttpFactory::make([
+        MockHttpFactory::json([
+            'data' => [
+                'id' => 1,
+                'wristband_id' => 'W-1001',
+                'participant_type' => 'participant',
+                'full_name' => 'John Doe',
+                'email' => 'john@example.com',
+                'phone_number' => '07700900000',
+                'association' => 'Group A',
+                'off_site' => false,
+                'checked_in_at' => '2026-03-15T09:00:00.000000Z',
+                'group' => null,
+            ],
+        ]),
+    ], $history);
+
+    $client = new Client('token', 'https://api.eventio.uk/api/v2', $guzzle);
+    $participant = $client->event(1)->participants()->getByWristband('W-1001');
+
+    expect($participant)->toBeInstanceOf(Participant::class);
+    expect($participant->wristbandId)->toBe('W-1001');
+
+    $uri = (string) $history[0]['request']->getUri();
+    expect($uri)->toContain('event/1/participants/wristband/W-1001');
 });
