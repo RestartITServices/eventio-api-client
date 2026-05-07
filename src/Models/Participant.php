@@ -11,7 +11,7 @@ final readonly class Participant implements \JsonSerializable
 {
     public function __construct(
         public int $id,
-        public ?int $wristbandId,
+        public ?int $refIndex,
         public ParticipantType $participantType,
         public string $fullName,
         public ?string $email,
@@ -29,7 +29,7 @@ final readonly class Participant implements \JsonSerializable
     {
         return new self(
             id: $data['id'],
-            wristbandId: $data['wristband_id'] ?? null,
+            refIndex: $data['ref_index'] ?? null,
             participantType: ParticipantType::from($data['participant_type']),
             fullName: $data['full_name'],
             email: $data['email'] ?? null,
@@ -48,7 +48,7 @@ final readonly class Participant implements \JsonSerializable
     {
         return [
             'id' => $this->id,
-            'wristband_id' => $this->wristbandId,
+            'ref_index' => $this->refIndex,
             'participant_type' => $this->participantType->value,
             'full_name' => $this->fullName,
             'email' => $this->email,

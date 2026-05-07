@@ -22,7 +22,7 @@ final class Client
         ?Guzzle $guzzle = null,
         ?string $tenant = null,
     ) {
-        if ($baseUrl === self::BASE_URL && $tenant === null) {
+        if ($baseUrl === self::BASE_URL && $tenant === null && $guzzle === null) {
             throw new \InvalidArgumentException('A tenant must be provided when using the default base URL.');
         }
 

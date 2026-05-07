@@ -323,7 +323,7 @@ test('Notification::fromArray with typed filters', function () {
 test('Participant::fromArray creates participant model', function () {
     $participant = Participant::fromArray([
         'id' => 1,
-        'wristband_id' => 1001,
+        'ref_index' => 1001,
         'participant_type' => 'participant',
         'full_name' => 'John Doe',
         'email' => 'john@example.com',
@@ -335,7 +335,7 @@ test('Participant::fromArray creates participant model', function () {
     ]);
 
     expect($participant->id)->toBe(1);
-    expect($participant->wristbandId)->toBe(1001);
+    expect($participant->refIndex)->toBe(1001);
     expect($participant->participantType)->toBe(ParticipantType::Participant);
     expect($participant->fullName)->toBe('John Doe');
     expect($participant->email)->toBe('john@example.com');
@@ -349,7 +349,7 @@ test('Participant::fromArray creates participant model', function () {
 test('Participant::fromArray with included group', function () {
     $participant = Participant::fromArray([
         'id' => 1,
-        'wristband_id' => 1001,
+        'ref_index' => 1001,
         'participant_type' => 'leader',
         'full_name' => 'Jane Smith',
         'email' => 'jane@example.com',
