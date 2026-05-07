@@ -33,14 +33,37 @@ final class Client
     {
         return (new UserResource($this->http))->get($eventId);
     }
-
+    
     public function events(): EventResource
     {
         return new EventResource($this->http);
     }
-
+    
     public function event(int $eventId): EventResource
     {
         return new EventResource($this->http, $eventId);
+    }
+
+    /**
+     * Sends a GET request to the specified URI.
+     *
+     * @param string $uri The URI to send the request to.
+     * @return array The response data.
+     */
+    public function get(string $uri): array
+    {
+        return $this->http->get($uri);
+    }
+
+    /**
+     * Sends a POST request to the specified URI with the given data.
+     *
+     * @param string $uri The URI to send the request to.
+     * @param array $data The data to include in the POST request.
+     * @return array The response data.
+     */
+    public function post(string $uri, array $data = []): array
+    {
+        return $this->http->post($uri, $data);
     }
 }
