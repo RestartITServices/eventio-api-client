@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 use EventIO\ApiClient\Models\Booking;
 use EventIO\ApiClient\Models\BookingTicket;
-use EventIO\ApiClient\Models\Customer;
+use EventIO\ApiClient\Models\Gate;
+use EventIO\ApiClient\Models\GatePassage;
+use EventIO\ApiClient\Models\GroupUser;
 use EventIO\ApiClient\Models\Event;
 use EventIO\ApiClient\Models\EventRole;
 use EventIO\ApiClient\Models\EventRolePermission;
@@ -17,6 +19,10 @@ use EventIO\ApiClient\Models\Participant;
 use EventIO\ApiClient\Models\Ticket;
 use EventIO\ApiClient\Models\User;
 use EventIO\ApiClient\Enums\BookingStatus;
+use EventIO\ApiClient\Enums\GateCaptureMethod;
+use EventIO\ApiClient\Enums\GateDirection;
+use EventIO\ApiClient\Enums\GateMode;
+use EventIO\ApiClient\Enums\GroupUserRole;
 use EventIO\ApiClient\Enums\NotificationStatus;
 use EventIO\ApiClient\Enums\NotificationType;
 use EventIO\ApiClient\Enums\ParticipantType;
@@ -129,10 +135,8 @@ test('Booking::fromArray with included group and tickets', function () {
             'id' => 1,
             'event_id' => 1,
             'name' => 'ACME Corp',
-            'customer' => [
-                'id' => 1,
-                'full_name' => 'Jane Smith',
-                'email_address' => 'jane@acme.com',
+            'users' => [
+                ['id' => 1, 'full_name' => 'Jane Smith', 'email_address' => 'jane@acme.com', 'role' => 'owner', 'active' => true],
             ],
         ],
     ]);
@@ -141,7 +145,7 @@ test('Booking::fromArray with included group and tickets', function () {
     expect($booking->tickets[0]->qty)->toBe(2);
     expect($booking->group)->not->toBeNull();
     expect($booking->group->name)->toBe('ACME Corp');
-    expect($booking->group->customer->fullName)->toBe('Jane Smith');
+    expect($booking->group->users[0]->fullName)->toBe('Jane Smith');
 });
 
 test('BookingTicket::fromArray creates booking ticket model', function () {
@@ -174,18 +178,97 @@ test('Group::fromArray creates group model', function () {
     expect($group->association)->toBe('Corporate Partner');
 });
 
-test('Customer::fromArray creates customer model', function () {
-    $customer = Customer::fromArray([
+test('GroupUser::fromArray creates group user model', function () {
+    $user = GroupUser::fromArray([
         'id' => 1,
         'full_name' => 'Jane Smith',
+        'first_name' => 'Jane',
+        'last_name' => 'Smith',
         'email_address' => 'jane@example.com',
-        'post_code' => 'SW1A 1AA',
+        'phone_number' => null,
+        'role' => 'owner',
+        'active' => true,
     ]);
 
-    expect($customer->id)->toBe(1);
-    expect($customer->fullName)->toBe('Jane Smith');
-    expect($customer->emailAddress)->toBe('jane@example.com');
-    expect($customer->postCode)->toBe('SW1A 1AA');
+    expect($user->id)->toBe(1);
+    expect($user->fullName)->toBe('Jane Smith');
+    expect($user->emailAddress)->toBe('jane@example.com');
+    expect($user->role)->toBe(GroupUserRole::Owner);
+});
+
+test('EventRole::fromArray with permissions keyed by area', function () {
+    $role = EventRole::fromArray([
+        'id' => 1,
+        'title' => 'Event Manager',
+        'permissions' => ['event' => 'admin', 'bookings' => 'write'],
+        'eventUsers' => [
+            ['id' => 1, 'user_id' => 5, 'event_id' => 1, 'active' => true],
+        ],
+    ]);
+
+    expect($role->permissions)->toHaveCount(2);
+    expect($role->permissions[0]->area)->toBe('event');
+    expect($role->permissions[0]->permission)->toBe(PermissionLevel::Admin);
+    expect($role->permissions[1]->area)->toBe('bookings');
+    expect($role->eventUsers)->toHaveCount(1);
+});
+
+test('Gate::fromArray creates gate model', function () {
+    $gate = Gate::fromArray([
+        'id' => 3,
+        'gate_key' => 'main-entrance',
+        'event_id' => 1,
+        'activity_id' => null,
+        'name' => 'Main Entrance',
+        'description' => null,
+        'mode' => 'occupancy',
+        'mode_label' => 'Occupancy',
+        'direction' => null,
+        'gate_group' => 'site',
+        'capacity' => 500,
+        'occupancy' => 120,
+        'allow_repeat' => true,
+        'repeat_cooldown_seconds' => null,
+        'require_checked_in' => true,
+        'sets_off_site' => false,
+        'opens_at' => '2026-06-15T08:00:00.000000Z',
+        'closes_at' => null,
+        'location' => null,
+        'latitude' => '51.5007',
+        'longitude' => '-0.1246',
+        'enabled' => true,
+        'is_open' => true,
+    ]);
+
+    expect($gate->gateKey)->toBe('main-entrance');
+    expect($gate->mode)->toBe(GateMode::Occupancy);
+    expect($gate->direction)->toBeNull();
+    expect($gate->capacity)->toBe(500);
+    expect($gate->latitude)->toBe(51.5007);
+    expect($gate->opensAt?->format('Y-m-d'))->toBe('2026-06-15');
+});
+
+test('GatePassage::fromArray with included participant', function () {
+    $passage = GatePassage::fromArray([
+        'id' => 9,
+        'gate_id' => 3,
+        'event_id' => 1,
+        'participant_id' => 7,
+        'direction' => 'in',
+        'passed_at' => '2026-06-15T09:00:00.000000Z',
+        'capture_method' => 'qr',
+        'participant' => [
+            'id' => 7,
+            'ref_index' => 1001,
+            'participant_type' => 'participant',
+            'full_name' => 'John Doe',
+            'off_site' => false,
+        ],
+    ]);
+
+    expect($passage->direction)->toBe(GateDirection::In);
+    expect($passage->captureMethod)->toBe(GateCaptureMethod::Qr);
+    expect($passage->participant->fullName)->toBe('John Doe');
 });
 
 test('EventRole::fromArray with permissions', function () {

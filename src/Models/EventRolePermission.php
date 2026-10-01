@@ -9,8 +9,8 @@ use EventIO\ApiClient\Enums\PermissionLevel;
 final readonly class EventRolePermission implements \JsonSerializable
 {
     public function __construct(
-        public int $id,
-        public int $eventRoleId,
+        public ?int $id,
+        public ?int $eventRoleId,
         public string $area,
         public PermissionLevel $permission,
     ) {}
@@ -21,8 +21,8 @@ final readonly class EventRolePermission implements \JsonSerializable
     public static function fromArray(array $data): self
     {
         return new self(
-            id: $data['id'],
-            eventRoleId: $data['event_role_id'],
+            id: $data['id'] ?? null,
+            eventRoleId: $data['event_role_id'] ?? null,
             area: $data['area'],
             permission: PermissionLevel::from($data['permission']),
         );

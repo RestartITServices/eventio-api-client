@@ -85,16 +85,37 @@ $ticket = $client->event(1)->tickets()->get(5);
 ```php
 $groups = $client->event(1)->groups()->list()->get();
 
-// Group bookings
+$group = $client->event(1)->groups()->get(3);
+
+// Group bookings, participants and the users who manage the group
 $bookings = $client->event(1)->groups()->bookings(groupId: 3)->get();
+$participants = $client->event(1)->groups()->participants(groupId: 3)->get();
+$users = $client->event(1)->groups()->users(groupId: 3)->get();
 ```
 
-### Customers
+### Participants
 
 ```php
-$customers = $client->event(1)->customers()->list()->get();
+$participants = $client->event(1)->participants()->list()->filter('group_id', 3)->get();
 
-$customer = $client->event(1)->customers()->get(10);
+$participant = $client->event(1)->participants()->get('participant-key');
+$participant = $client->event(1)->participants()->getByWristband('1001');
+```
+
+### Gates
+
+Gates can be addressed by id or by `gate_key`.
+
+```php
+$gates = $client->event(1)->gates()->list()->filter('enabled', 1)->get();
+
+$gate = $client->event(1)->gates()->get('main-entrance');
+$occupancy = $client->event(1)->gates()->occupancy(3);
+$roster = $client->event(1)->gates()->roster(3)->get();
+
+// Passage history, newest first
+$passages = $client->event(1)->gates()->passages(3, from: new DateTimeImmutable('-1 day'), perPage: 100)->get();
+$passages = $client->event(1)->gates()->participantPassages(participantId: 7)->get();
 ```
 
 ### Event Stats
@@ -109,6 +130,7 @@ echo $stats->totalProvisional;
 ### Notifications
 
 ```php
+use EventIO\ApiClient\Enums\NotificationType;
 use EventIO\ApiClient\Requests\CreateNotificationRequest;
 
 $notifications = $client->event(1)->notifications()->list()->get();
@@ -117,6 +139,7 @@ $notification = $client->event(1)->notifications()->create(
     new CreateNotificationRequest(
         title: 'Hello',
         content: 'Notification body',
+        type: NotificationType::InApp,
     )
 );
 ```
@@ -132,8 +155,16 @@ $users = $client->event(1)->users()->list()->get();
 
 ```php
 $user = $client->user();
-// or scoped to an event
+// or scoped to an event, with the role held on it
 $user = $client->user(eventId: 1);
+$user = $client->event(1)->user();
+```
+
+### Service Info
+
+```php
+$client->ping();    // "API is working"
+$client->version(); // API version string
 ```
 
 ## Query Builder

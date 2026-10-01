@@ -20,6 +20,8 @@ final readonly class Event implements \JsonSerializable
         public DateTimeImmutable $endDate,
         public ?array $tickets = null,
         public ?array $bookings = null,
+        public ?string $logoUrl = null,
+        public ?string $eventType = null,
     ) {}
 
     /**
@@ -35,6 +37,8 @@ final readonly class Event implements \JsonSerializable
             endDate: new DateTimeImmutable($data['end_date']),
             tickets: isset($data['tickets']) ? array_values(array_map(Ticket::fromArray(...), $data['tickets'])) : null,
             bookings: isset($data['bookings']) ? array_values(array_map(Booking::fromArray(...), $data['bookings'])) : null,
+            logoUrl: $data['logo_url'] ?? null,
+            eventType: $data['event_type'] ?? null,
         );
     }
 
@@ -49,6 +53,8 @@ final readonly class Event implements \JsonSerializable
             'name' => $this->name,
             'start_date' => $this->startDate->format('Y-m-d'),
             'end_date' => $this->endDate->format('Y-m-d'),
+            'logo_url' => $this->logoUrl,
+            'event_type' => $this->eventType,
             'tickets' => $this->tickets,
             'bookings' => $this->bookings,
         ];

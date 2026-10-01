@@ -29,8 +29,8 @@ final readonly class EventStats implements \JsonSerializable
             eventId: $data['event_id'],
             eventName: $data['event_name'],
             stats: array_values(array_map(EventStatItem::fromArray(...), $data['stats'])),
-            totalConfirmed: $data['total_confirmed'],
-            totalProvisional: $data['total_provisional'],
+            totalConfirmed: (int) $data['total_confirmed'],
+            totalProvisional: (int) $data['total_provisional'],
             generatedAt: new DateTimeImmutable($data['generated_at']),
         );
     }

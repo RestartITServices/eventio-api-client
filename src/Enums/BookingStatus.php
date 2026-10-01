@@ -9,4 +9,6 @@ enum BookingStatus: string
     case Provisional = 'provisional';
     case Confirmed = 'confirmed';
     case WaitingList = 'waiting_list';
+    case Overpayment = 'overpayment';
+    case Cancelled = 'cancelled';
 }

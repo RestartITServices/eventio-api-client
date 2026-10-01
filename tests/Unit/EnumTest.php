@@ -12,6 +12,7 @@ test('BookingStatus enum has correct values', function () {
     expect(BookingStatus::Provisional->value)->toBe('provisional');
     expect(BookingStatus::Confirmed->value)->toBe('confirmed');
     expect(BookingStatus::WaitingList->value)->toBe('waiting_list');
+    expect(BookingStatus::Overpayment->value)->toBe('overpayment');
     expect(BookingStatus::from('confirmed'))->toBe(BookingStatus::Confirmed);
 });
 

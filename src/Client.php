@@ -33,7 +33,20 @@ final class Client
     {
         return (new UserResource($this->http))->get($eventId);
     }
-    
+
+    /**
+     * Checks the API is reachable and returns its status message.
+     */
+    public function ping(): string
+    {
+        return (string) ($this->http->get('/')['message'] ?? '');
+    }
+
+    public function version(): string
+    {
+        return (string) ($this->http->get('version')['version'] ?? '');
+    }
+
     public function events(): EventResource
     {
         return new EventResource($this->http);

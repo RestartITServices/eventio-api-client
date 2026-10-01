@@ -23,8 +23,8 @@ final readonly class EventStatItem implements \JsonSerializable
             id: $data['id'],
             participantType: $data['participant_type'],
             title: $data['title'],
-            totalConfirmedTicketsSold: $data['total_confirmed_tickets_sold'],
-            totalProvisionalTicketsSold: $data['total_provisional_tickets_sold'],
+            totalConfirmedTicketsSold: (int) $data['total_confirmed_tickets_sold'],
+            totalProvisionalTicketsSold: (int) $data['total_provisional_tickets_sold'],
         );
     }
 

@@ -6,6 +6,7 @@ namespace EventIO\ApiClient\Resources;
 
 use EventIO\ApiClient\Models\Event;
 use EventIO\ApiClient\Models\EventStats;
+use EventIO\ApiClient\Models\User;
 use EventIO\ApiClient\Support\HttpClient;
 use EventIO\ApiClient\Support\QueryBuilder;
 
@@ -60,6 +61,14 @@ final readonly class EventResource
         return EventStats::fromArray($response);
     }
 
+    /**
+     * The authenticated user, with the role they hold on this event.
+     */
+    public function user(?int $eventId = null): User
+    {
+        return (new UserResource($this->http))->get($this->resolveEventId($eventId));
+    }
+
     public function tickets(?int $eventId = null): TicketResource
     {
         return new TicketResource($this->http, $this->resolveEventId($eventId));
@@ -73,11 +82,6 @@ final readonly class EventResource
     public function groups(?int $eventId = null): GroupResource
     {
         return new GroupResource($this->http, $this->resolveEventId($eventId));
-    }
-
-    public function customers(?int $eventId = null): CustomerResource
-    {
-        return new CustomerResource($this->http, $this->resolveEventId($eventId));
     }
 
     public function roles(?int $eventId = null): EventRoleResource
@@ -98,6 +102,11 @@ final readonly class EventResource
     public function participants(?int $eventId = null): ParticipantResource
     {
         return new ParticipantResource($this->http, $this->resolveEventId($eventId));
+    }
+
+    public function gates(?int $eventId = null): GateResource
+    {
+        return new GateResource($this->http, $this->resolveEventId($eventId));
     }
 
     private function resolveEventId(?int $eventId): int

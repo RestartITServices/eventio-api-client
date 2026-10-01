@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace EventIO\ApiClient\Models;
 
+use DateTimeImmutable;
+
 final readonly class Group implements \JsonSerializable
 {
     /**
+     * @param list<GroupUser>|null $users
      * @param list<Booking>|null $bookings
      */
     public function __construct(
@@ -14,9 +17,11 @@ final readonly class Group implements \JsonSerializable
         public int $eventId,
         public string $name,
         public ?string $association = null,
-        public ?Customer $customer = null,
+        public ?array $users = null,
         public ?array $bookings = null,
         public ?Event $event = null,
+        public ?DateTimeImmutable $checkedInAt = null,
+        public ?string $postCode = null,
     ) {}
 
     /**
@@ -29,9 +34,11 @@ final readonly class Group implements \JsonSerializable
             eventId: $data['event_id'],
             name: $data['name'],
             association: $data['association'] ?? null,
-            customer: isset($data['customer']) ? Customer::fromArray($data['customer']) : null,
+            users: isset($data['users']) ? array_values(array_map(GroupUser::fromArray(...), $data['users'])) : null,
             bookings: isset($data['bookings']) ? array_values(array_map(Booking::fromArray(...), $data['bookings'])) : null,
             event: isset($data['event']) ? Event::fromArray($data['event']) : null,
+            checkedInAt: isset($data['checked_in_at']) ? new DateTimeImmutable($data['checked_in_at']) : null,
+            postCode: $data['post_code'] ?? null,
         );
     }
 
@@ -45,7 +52,9 @@ final readonly class Group implements \JsonSerializable
             'event_id' => $this->eventId,
             'name' => $this->name,
             'association' => $this->association,
-            'customer' => $this->customer,
+            'checked_in_at' => $this->checkedInAt?->format(\DateTimeInterface::ATOM),
+            'post_code' => $this->postCode,
+            'users' => $this->users,
             'bookings' => $this->bookings,
             'event' => $this->event,
         ];

@@ -23,13 +23,40 @@ final readonly class EventRole implements \JsonSerializable
      */
     public static function fromArray(array $data): self
     {
+        $eventUsers = $data['eventUsers'] ?? $data['event_users'] ?? null;
+
         return new self(
             id: $data['id'],
             title: $data['title'],
             event: isset($data['event']) ? Event::fromArray($data['event']) : null,
-            permissions: isset($data['permissions']) ? array_values(array_map(EventRolePermission::fromArray(...), $data['permissions'])) : null,
-            eventUsers: isset($data['event_users']) ? array_values(array_map(EventUser::fromArray(...), $data['event_users'])) : null,
+            permissions: isset($data['permissions']) ? self::permissions($data['permissions'], $data['id']) : null,
+            eventUsers: isset($eventUsers) ? array_values(array_map(EventUser::fromArray(...), $eventUsers)) : null,
         );
+    }
+
+    /**
+     * The API returns permissions as an area => level map.
+     *
+     * @param array<int|string, mixed> $permissions
+     * @return list<EventRolePermission>
+     */
+    private static function permissions(array $permissions, int $roleId): array
+    {
+        $result = [];
+
+        foreach ($permissions as $area => $permission) {
+            if ($permission === null) {
+                continue;
+            }
+
+            $result[] = EventRolePermission::fromArray(is_array($permission) ? $permission : [
+                'event_role_id' => $roleId,
+                'area' => (string) $area,
+                'permission' => $permission,
+            ]);
+        }
+
+        return $result;
     }
 
     /**

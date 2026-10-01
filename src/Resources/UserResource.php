@@ -15,8 +15,7 @@ final readonly class UserResource
 
     public function get(?int $eventId = null): User
     {
-        $query = $eventId !== null ? ['eventId' => $eventId] : [];
-        $response = $this->http->get('user', $query);
+        $response = $this->http->get($eventId !== null ? "event/{$eventId}/user" : 'user');
 
         $data = $response['data'];
 

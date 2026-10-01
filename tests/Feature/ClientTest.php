@@ -8,11 +8,14 @@ use EventIO\ApiClient\Enums\NotificationStatus;
 use EventIO\ApiClient\Enums\NotificationType;
 use EventIO\ApiClient\Enums\ParticipantType;
 use EventIO\ApiClient\Models\Booking;
-use EventIO\ApiClient\Models\Customer;
 use EventIO\ApiClient\Models\Event;
 use EventIO\ApiClient\Models\EventRole;
 use EventIO\ApiClient\Models\EventUser;
+use EventIO\ApiClient\Models\Gate;
+use EventIO\ApiClient\Models\GatePassage;
+use EventIO\ApiClient\Models\GatePresence;
 use EventIO\ApiClient\Models\Group;
+use EventIO\ApiClient\Models\GroupUser;
 use EventIO\ApiClient\Models\Notification;
 use EventIO\ApiClient\Models\Participant;
 use EventIO\ApiClient\Models\Ticket;
@@ -37,18 +40,37 @@ test('client fetches user', function () {
 });
 
 test('client fetches user with event role', function () {
+    $history = [];
     $guzzle = MockHttpFactory::make([
         MockHttpFactory::json([
             'data' => ['id' => 1, 'name' => 'John Doe', 'email' => 'john@example.com'],
-            'event_role' => ['id' => 1, 'title' => 'Event Manager'],
+            'event_role' => ['id' => 1, 'title' => 'Event Manager', 'permissions' => ['bookings' => 'read']],
         ]),
-    ]);
+    ], $history);
 
     $client = new Client('token', 'https://api.eventio.uk/api/v2', $guzzle);
     $user = $client->user(eventId: 1);
 
     expect($user->eventRole)->not->toBeNull();
     expect($user->eventRole->title)->toBe('Event Manager');
+    expect($user->eventRole->permissions[0]->area)->toBe('bookings');
+    expect($history[0]['request']->getUri()->getPath())->toBe('/api/v2/event/1/user');
+});
+
+test('client reads ping and version', function () {
+    $history = [];
+    $guzzle = MockHttpFactory::make([
+        MockHttpFactory::json(['message' => 'API is working']),
+        MockHttpFactory::json(['version' => '2.1.0']),
+    ], $history);
+
+    $client = new Client('token', 'https://api.eventio.uk/api/v2', $guzzle);
+
+    expect($client->ping())->toBe('API is working');
+    expect($client->version())->toBe('2.1.0');
+
+    expect($history[0]['request']->getUri()->getPath())->toBe('/api/v2/');
+    expect($history[1]['request']->getUri()->getPath())->toBe('/api/v2/version');
 });
 
 test('client lists events with filters', function () {
@@ -133,7 +155,7 @@ test('client lists bookings with includes', function () {
                         'id' => 1,
                         'event_id' => 1,
                         'name' => 'ACME Corp',
-                        'customer' => ['id' => 1, 'full_name' => 'Jane Smith', 'email_address' => 'jane@acme.com'],
+                        'users' => [['id' => 1, 'full_name' => 'Jane Smith', 'email_address' => 'jane@acme.com', 'role' => 'owner', 'active' => true]],
                     ],
                 ],
             ],
@@ -143,7 +165,7 @@ test('client lists bookings with includes', function () {
     $client = new Client('token', 'https://api.eventio.uk/api/v2', $guzzle);
     $bookings = $client->event(1)->bookings()->list()
         ->filter('status', 'confirmed')
-        ->include('tickets', 'group.customer')
+        ->include('tickets', 'group.users')
         ->get()
         ->toArray();
 
@@ -151,7 +173,7 @@ test('client lists bookings with includes', function () {
     expect($bookings[0])->toBeInstanceOf(Booking::class);
     expect($bookings[0]->status)->toBe(BookingStatus::Confirmed);
     expect($bookings[0]->tickets)->toHaveCount(1);
-    expect($bookings[0]->group->customer->fullName)->toBe('Jane Smith');
+    expect($bookings[0]->group->users[0]->fullName)->toBe('Jane Smith');
 
     $uri = (string) $history[0]['request']->getUri();
     expect($uri)->toContain('event/1/bookings');
@@ -203,20 +225,29 @@ test('client lists groups', function () {
     expect($groups[0])->toBeInstanceOf(Group::class);
 });
 
-test('client lists customers', function () {
+test('group users and participants endpoints', function () {
+    $history = [];
     $guzzle = MockHttpFactory::make([
         MockHttpFactory::json([
             'data' => [
-                ['id' => 1, 'full_name' => 'Jane Smith', 'email_address' => 'jane@example.com', 'post_code' => 'SW1A 1AA'],
+                ['id' => 1, 'full_name' => 'Jane Smith', 'first_name' => 'Jane', 'last_name' => 'Smith', 'email_address' => 'jane@example.com', 'phone_number' => null, 'role' => 'owner', 'active' => true],
             ],
         ]),
-    ]);
+        MockHttpFactory::json([
+            'data' => [
+                ['id' => 7, 'ref_index' => 1001, 'participant_type' => 'participant', 'full_name' => 'John Doe', 'off_site' => false],
+            ],
+        ]),
+    ], $history);
 
     $client = new Client('token', 'https://api.eventio.uk/api/v2', $guzzle);
-    $customers = $client->event(1)->customers()->list()->get()->toArray();
+    $users = $client->event(1)->groups()->users(5)->get()->toArray();
+    $participants = $client->event(1)->groups()->participants(5)->get()->toArray();
 
-    expect($customers)->toHaveCount(1);
-    expect($customers[0])->toBeInstanceOf(Customer::class);
+    expect($users[0])->toBeInstanceOf(GroupUser::class);
+    expect($participants[0])->toBeInstanceOf(Participant::class);
+    expect($history[0]['request']->getUri()->getPath())->toBe('/api/v2/event/1/groups/5/users');
+    expect($history[1]['request']->getUri()->getPath())->toBe('/api/v2/event/1/groups/5/participants');
 });
 
 test('client lists roles with permissions', function () {
@@ -226,9 +257,7 @@ test('client lists roles with permissions', function () {
                 [
                     'id' => 1,
                     'title' => 'Event Manager',
-                    'permissions' => [
-                        ['id' => 1, 'event_role_id' => 1, 'area' => 'event', 'permission' => 'admin'],
-                    ],
+                    'permissions' => ['event' => 'admin'],
                 ],
             ],
         ]),
@@ -525,4 +554,55 @@ test('client gets participant by wristband id', function () {
 
     $uri = (string) $history[0]['request']->getUri();
     expect($uri)->toContain('event/1/participants/wristband/W-1001');
+});
+
+test('client reads gates', function () {
+    $gate = [
+        'id' => 3, 'gate_key' => 'main-entrance', 'event_id' => 1, 'activity_id' => null, 'name' => 'Main Entrance',
+        'description' => null, 'mode' => 'occupancy', 'mode_label' => 'Occupancy', 'direction' => null,
+        'gate_group' => null, 'capacity' => 500, 'occupancy' => 120, 'allow_repeat' => true,
+        'repeat_cooldown_seconds' => null, 'require_checked_in' => true, 'sets_off_site' => false,
+        'opens_at' => null, 'closes_at' => null, 'location' => null, 'latitude' => null, 'longitude' => null,
+        'enabled' => true, 'is_open' => true,
+    ];
+    $passage = [
+        'id' => 9, 'gate_id' => 3, 'event_id' => 1, 'participant_id' => 7, 'direction' => 'in',
+        'passed_at' => '2026-06-15T09:00:00.000000Z', 'capture_method' => 'qr',
+    ];
+
+    $history = [];
+    $guzzle = MockHttpFactory::make([
+        MockHttpFactory::json(['data' => [$gate]]),
+        MockHttpFactory::json(['data' => $gate]),
+        MockHttpFactory::json([
+            'gate_id' => 3, 'occupancy_key' => 'gate:3', 'tracks_occupancy' => true,
+            'occupancy' => 120, 'capacity' => 500, 'remaining' => 380, 'is_open' => true,
+        ]),
+        MockHttpFactory::json(['data' => [
+            ['id' => 1, 'gate_id' => 3, 'event_id' => 1, 'participant_id' => 7, 'occupancy_key' => 'gate:3', 'entered_at' => '2026-06-15T09:00:00.000000Z', 'entry_passage_id' => 9],
+        ]]),
+        MockHttpFactory::json(['data' => [$passage], 'meta' => ['current_page' => 1, 'last_page' => 1]]),
+        MockHttpFactory::json(['data' => [$passage], 'meta' => ['current_page' => 1, 'last_page' => 1]]),
+    ], $history);
+
+    $gates = (new Client('token', 'https://api.eventio.uk/api/v2', $guzzle))->event(1)->gates();
+
+    expect($gates->list()->filter('enabled', 1)->get()->toArray()[0])->toBeInstanceOf(Gate::class);
+    expect($gates->get('main-entrance')->name)->toBe('Main Entrance');
+    expect($gates->occupancy(3)->remaining)->toBe(380);
+    expect($gates->roster(3)->get()->toArray()[0])->toBeInstanceOf(GatePresence::class);
+    expect($gates->passages(3, from: new DateTimeImmutable('2026-06-15T00:00:00+00:00'), perPage: 100)->get()->toArray()[0])
+        ->toBeInstanceOf(GatePassage::class);
+    expect($gates->participantPassages(7)->get()->toArray())->toHaveCount(1);
+
+    $paths = array_map(fn (array $entry) => $entry['request']->getUri()->getPath(), $history);
+    expect($paths)->toBe([
+        '/api/v2/event/1/gates',
+        '/api/v2/event/1/gates/main-entrance',
+        '/api/v2/event/1/gates/3/occupancy',
+        '/api/v2/event/1/gates/3/roster',
+        '/api/v2/event/1/gates/3/passages',
+        '/api/v2/event/1/gates/participants/7/passages',
+    ]);
+    expect($history[4]['request']->getUri()->getQuery())->toContain('per_page=100');
 });
